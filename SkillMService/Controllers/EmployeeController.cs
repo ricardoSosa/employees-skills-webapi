@@ -25,6 +25,8 @@ namespace SkillMService.Controllers
             return new EmployeeResult(parentsList, 1);            
         }
 
+       
+
 
         [Route("getEmployee")]
         public EmployeeSkillResult GetEmployee(string userID)
@@ -79,6 +81,64 @@ namespace SkillMService.Controllers
             empSkill.Status = 1;
 
             return empSkill;
+        }
+
+        [Route("updateEmployee")]
+        public string updateEmployee(string name, string newname)
+        {
+            string result = "";            
+            if (name != "" && newname != "")
+            {
+                if (existsEmployee(name))
+                {
+                    if (existsEmployee(newname))
+                    {
+                        result = "An employee with that new name already exists.";
+                    }
+                    else
+                    {
+                            DBConnection.GraphClient().Cypher 
+                            .Match("(emp:Employee)")
+                            .Where("emp.name = {employeeName}")
+                            .WithParam("employeeName", name)
+                            .Set("emp.name = {newName}")
+                            .WithParam("newName", newname)
+                            .ExecuteWithoutResults();                    
+                        result = "The employee has been modified.";
+                    }
+                }
+                else
+                {                
+                    result = "The employee doesn't exists.";
+                }
+            }
+            else
+            {
+                result = "The parameters cannot be empty.";
+            }
+            return result;
+        }
+
+        private bool existsEmployee(string employeeName)
+        {
+            bool exists = false;
+            
+            var employee = DBConnection.GraphClient().Cypher
+                .Match("(emp:Employee)")
+                .Where("emp.name = {employeeName}")
+                .WithParam("employeeName", employeeName)
+                .Return(emp => emp.As<Employee>().name)
+                .Results.SingleOrDefault();
+
+            if (employee == null)
+            {
+                exists = false;
+            }
+            else
+            {
+                exists = true;
+            }
+            return exists;
         }
     }
 }

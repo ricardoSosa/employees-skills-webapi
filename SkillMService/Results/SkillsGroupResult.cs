@@ -10,8 +10,8 @@ namespace SkillMService.Results
     {
         public SkillsGroupResult() { }
 
-        public int id { get; set; }
+        public string id { get; set; }
         public string name { get; set; }
-        public List<SkillGroup> SkillGroups { get; set; }
+        public List<Family> SkillGroups { get; set; }
     }
 }

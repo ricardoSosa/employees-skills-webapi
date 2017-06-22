@@ -23,7 +23,34 @@ namespace SkillMService.Controllers
 
             return new SkillsResult(skillList, 1);
         }
-    }
 
+        [Route("getSkill")]
+        public SkillsGroupResult getSkill(string id)
+        {
+            Skill skill = DBConnection.GraphClient().Cypher
+                    .Match("(s:Skill)")
+                    .Where("s.id = {id}")
+                    .WithParam("id", id)
+                    .Return(s => s.As<Skill>())
+                    .Results.Single();            
+
+            List<Family> skGroup = DBConnection.GraphClient().Cypher
+                    .Match("(s:Skill)-[r:isFor]->(f:Family)")
+                    .Where("s.id = {id}")
+                    .WithParam("id", id)
+                    .Return(f => f.As<Family>())
+                    .Results.ToList<Family>();
+
+
+            SkillsGroupResult skGroupRes = new SkillsGroupResult();
+            skGroupRes.id = skill.id;
+            skGroupRes.name = skill.name;
+            skGroupRes.SkillGroups = skGroup;
+
+            return skGroupRes;
+        }
+
+    }
+   
     
 }
