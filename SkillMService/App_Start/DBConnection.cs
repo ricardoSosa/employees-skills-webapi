@@ -8,8 +8,6 @@ namespace SkillMService.App_Start
 {
     public static class DBConnection
     {
-       
-        
         static public GraphClient GraphClient()
         {
             GraphClient graphClient;
