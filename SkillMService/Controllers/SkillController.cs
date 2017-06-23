@@ -101,6 +101,175 @@ namespace SkillMService.Controllers
 
             return skempRes;           
         }
+
+
+
+        public static  bool existsSkill(string skillName)
+        {
+            bool exists = false;
+
+            var skill =
+                DBConnection.GraphClient().Cypher
+                    .Match("(sk:Skill)")
+                    .Where("sk.name = {skillName}")
+                    .WithParam("skillName", skillName)
+                    .Return(sk => sk.As<Skill>().name)
+                    .Results.SingleOrDefault();
+
+            if (skill == null)
+            {
+                exists = false;
+            }
+            else
+            {
+                exists = true;
+            }
+
+            return exists;
+        }
+
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        [Route("createSkill")]
+        public string createSkill(string skillName)
+        {
+            string result = "";
+
+            if (skillName != "")
+            {
+                if (existsSkill(skillName))
+                {
+                    result = "The skill actually exists.";
+                }
+                else
+                {
+                    Skill newSkill = new Skill(skillName);
+                    DBConnection.GraphClient().Cypher
+                        .Merge("(sk:Skill {name: {name}})")
+                        .OnCreate()
+                        .Set("sk = {newSkill}")
+                        .WithParams(new
+                        {
+                            name = newSkill.name,
+                            newSkill
+                        })
+                        .ExecuteWithoutResults();
+                    result = "The skill has been created.";
+                }
+            }
+            else
+            {
+                result = "The skill needs a name.";
+            }
+            return result;
+        }
+
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        [Route("updateSkill")]
+        public string modifySkill(string skillName, string newName)
+        {
+            string result = "";
+
+            if (skillName != "" && newName != "")
+            {
+                if (existsSkill(skillName))
+                {
+                    if (existsSkill(newName))
+                    {
+                        result = "Actually exists a skill with that new name.";
+                    }
+                    else
+                    {
+                        DBConnection.GraphClient().Cypher
+                            .Match("(sk:Skill)")
+                            .Where("sk.name = {skillName}")
+                            .WithParam("skillName", skillName)
+                            .Set("sk.name = {newName}")
+                            .WithParam("newName", newName)
+                            .ExecuteWithoutResults();
+
+                        result = "The skill has been modified.";
+                    }
+                }
+                else
+                {
+                    result = "The skill doesn't exists.";
+                }
+            }
+            else
+            {
+                result = "The parameters cannot be empty.";
+            }
+
+            return result;
+        }
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        [Route("relateSkillGroup")]
+        public string relateSkillToSkillGroup(string skillName, string skillGroupName)
+        {
+            string result = "";
+
+            if (skillName != "" && skillGroupName != "")
+            {
+                if (existsSkill(skillName) && FamilyController.existsSkillGroup(skillGroupName))
+                {
+                    if (isSkillRelatedToSkillGroup(skillName, skillGroupName))
+                    {
+                        result = "The skill is actually related to the skill group.";
+                    }
+                    else
+                    {
+                        DBConnection.GraphClient().Cypher
+                           .Match("(sk:Skill), (skgp:SkillGroup)")
+                           .Where("sk.name = {skillName}")
+                           .WithParam("skillName", skillName)
+                           .AndWhere("skgp.name = {skillGroupName}")
+                           .WithParam("skillGroupName", skillGroupName)
+                           .Create("(sk)-[:IS_RELATED_TO]->(skgp)")
+                           .ExecuteWithoutResults();
+
+                        result = "Assigned skill.";
+                    }
+                }
+                else
+                {
+                    result = "The skill or skill group doesn't exist.";
+                }
+            }
+            else
+            {
+                result = "The parameters cannot be empty.";
+            }
+
+            return result;
+        }
+
+        private bool isSkillRelatedToSkillGroup(string skillName, string skillGroupName)
+        {
+            bool isRelated = false;
+
+            var result =
+                graphClient.Cypher
+                .Match("(sk:Skill)-[rel:IS_RELATED_TO]->(skgp:SkillGroup)")
+                .Where("sk.name = {skillName}")
+                .WithParam("skillName", skillName)
+                .AndWhere("skgp.name = {skillGroupName}")
+                .WithParam("skillGroupName", skillGroupName)
+                .Return(rel => rel.As<RelationshipInstance<object>>())
+                .Results;
+
+            if (result.Count() != 0)
+            {
+                isRelated = true;
+            }
+
+            return isRelated;
+        }
     }
    
     

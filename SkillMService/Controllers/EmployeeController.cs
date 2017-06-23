@@ -25,9 +25,6 @@ namespace SkillMService.Controllers
             return new EmployeeResult(parentsList, 1);            
         }
 
-       
-
-
         [Route("getEmployee")]
         public EmployeeSkillResult GetEmployee(string userID)
         {            
@@ -83,32 +80,36 @@ namespace SkillMService.Controllers
             return empSkill;
         }
 
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
         [Route("updateEmployee")]
-        public string updateEmployee(string name, string newname)
+        public string updateEmployee(string employeeName, string newName)
         {
-            string result = "";            
-            if (name != "" && newname != "")
+            string result = "";
+
+            if (employeeName != "" && newName != "")
             {
-                if (existsEmployee(name))
+                if (existsEmployee(employeeName))
                 {
-                    if (existsEmployee(newname))
+                    if (existsEmployee(newName))
                     {
-                        result = "An employee with that new name already exists.";
+                        result = "Actually exists an employee with that new name.";
                     }
                     else
                     {
-                            DBConnection.GraphClient().Cypher 
+                        DBConnection.GraphClient().Cypher
                             .Match("(emp:Employee)")
                             .Where("emp.name = {employeeName}")
-                            .WithParam("employeeName", name)
+                            .WithParam("employeeName", employeeName)
                             .Set("emp.name = {newName}")
-                            .WithParam("newName", newname)
-                            .ExecuteWithoutResults();                    
+                            .WithParam("newName", newName)
+                            .ExecuteWithoutResults();
                         result = "The employee has been modified.";
                     }
                 }
                 else
-                {                
+                {
                     result = "The employee doesn't exists.";
                 }
             }
@@ -119,12 +120,14 @@ namespace SkillMService.Controllers
             return result;
         }
 
+        
         private bool existsEmployee(string employeeName)
         {
             bool exists = false;
-            
-            var employee = DBConnection.GraphClient().Cypher
-                .Match("(emp:Employee)")
+
+            var employee =
+                DBConnection.GraphClient().Cypher
+                .Match("(emp:Emp)")
                 .Where("emp.name = {employeeName}")
                 .WithParam("employeeName", employeeName)
                 .Return(emp => emp.As<Employee>().name)
@@ -139,6 +142,124 @@ namespace SkillMService.Controllers
                 exists = true;
             }
             return exists;
+        }
+
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        [Route("createEmployee")]
+        public string createEmployee(string employeeName)
+        {
+           string result = "";
+
+            if (employeeName != "" && !existsEmployee(employeeName) )
+            {
+                Employee newEmployee = new Employee(employeeName);
+                DBConnection.GraphClient().Cypher
+                    .Merge("(emp:Emp {name: {name}})")
+                    .OnCreate()
+                    .Set("emp = {newEmployee}")
+                    .WithParams(new
+                    {
+                        name = newEmployee.name,
+                        newEmployee
+                    })
+                    .ExecuteWithoutResults();
+                result = "The employee has been created.";
+                return result;
+            }
+            else
+            {
+                result = "The employee need a name.";
+                return result;
+            }
+        }
+
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        [Route("createEmployee")]
+        public string assignSkillToEmployee(string employeeName, string skillName, string skillLevel)
+        {
+            string result = "";
+
+            if (employeeName != "" && skillName != "" && skillLevel != "")
+            {
+                if (skillLevel == "Junior" || skillLevel == "Intermediate" || skillLevel == "Senior" || skillLevel == "Lead")
+                {
+                    if (existsEmployee(employeeName) && SkillController.existsSkill(skillName))
+                    {
+                        if (isEmployeeRelatedToSkill(employeeName, skillName))
+                        {
+                            modifySkillLevelToEmployee(employeeName, skillName, skillLevel);
+                        }
+                        else
+                        {
+                            DBConnection.GraphClient().Cypher
+                                .Match("(emp:Emp), (sk:Skill)")
+                                .Where("emp.name = {employeeName}")
+                                .WithParam("employeeName", employeeName)
+                                .AndWhere("sk.name = {skillName}")
+                                .WithParam("skillName", skillName)
+                                .Create("(emp)-[:Knows {value: {skillLevel}}]->(sk)")
+                                .WithParam("skillLevel", skillLevel)
+                                .ExecuteWithoutResults();
+                        }
+                        result = "Assigned level";
+                    }
+                    else
+                    {
+                        result = "The employee or skill doesn't exist.";
+                    }
+                }
+                else
+                {
+                    result = "Invalid skill level.";
+                }
+            }
+            else
+            {
+                result = "The parameters cannot be empty.";
+            }
+
+            return result;
+        }
+
+
+
+        private bool isEmployeeRelatedToSkill(string employeeName, string skillName)
+        {
+            bool isRelated = false;
+
+            var result =
+                DBConnection.GraphClient().Cypher
+                .Match("(emp:Emp)-[rel]->(sk:Skill)")
+                .Where("emp.name = {employeeName}")
+                .WithParam("employeeName", employeeName)
+                .AndWhere("sk.name = {skillName}")
+                .WithParam("skillName", skillName)
+                .Return(rel => new {
+                    R = rel.As<RelationshipInstance<object>>()
+                }).Results;
+
+            if (result.Count() != 0)
+            {
+                isRelated = true;
+            }
+
+            return isRelated;
+        }
+
+        private void modifySkillLevelToEmployee(string employeeName, string skillName, string skillLevel)
+        {
+            DBConnection.GraphClient().Cypher
+                .Match("(emp:Emp)-[rel:Knows]->(sk:Skill)")
+                .Where("emp.name = {employeeName}")
+                .WithParam("employeeName", employeeName)
+                .AndWhere("sk.name = {skillName}")
+                .WithParam("skillName", skillName)
+                .Set("rel.value = {skillLevel}")
+                .WithParam("skillLevel", skillLevel)
+                .ExecuteWithoutResults();
         }
     }
 }

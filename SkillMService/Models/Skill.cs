@@ -7,6 +7,11 @@ namespace SkillMService.Models
 {
     public class Skill
     {
+        public Skill(string name)
+        {
+            this.name = name;
+        }
+
         public string id { get; set; }
         public string name { get; set; }
     }
