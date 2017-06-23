@@ -237,6 +237,7 @@
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
     <Compile Include="Results\EmployeeResult.cs" />
+    <Compile Include="Results\SkillEmployeesResult.cs" />
     <Compile Include="Results\SkillsGroupResult.cs" />
     <Compile Include="Results\SkillsResult.cs" />
     <Compile Include="Startup.cs" />

@@ -50,6 +50,57 @@ namespace SkillMService.Controllers
             return skGroupRes;
         }
 
+
+        [Route("getEmployees")]
+        public SkillEmployeesResult getEmployees(string id)
+        {
+            Skill skill = DBConnection.GraphClient().Cypher
+                    .Match("(s:Skill)")
+                    .Where("s.id = {id}")
+                    .WithParam("id", id)
+                    .Return(s => s.As<Skill>())
+                    .Results.Single();
+
+
+            List<Employee> jrsemp = DBConnection.GraphClient().Cypher
+                    .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
+                    .Where("s.id = {id} and r.value =1")
+                    .WithParam("id", id)
+                    .Return(emp => emp.As<Employee>())
+                    .Results.ToList<Employee>();
+
+            List<Employee> intemp = DBConnection.GraphClient().Cypher
+                    .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
+                    .Where("s.id = {id} and r.value = 2")
+                    .WithParam("id", id)
+                    .Return(emp => emp.As<Employee>())
+                    .Results.ToList<Employee>();
+
+            List<Employee> sremp = DBConnection.GraphClient().Cypher
+                    .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
+                    .Where("s.id = {id} and r.value =3")
+                    .WithParam("id", id)
+                    .Return(emp => emp.As<Employee>())
+                    .Results.ToList<Employee>();
+
+
+            List<Employee> ldsemp = DBConnection.GraphClient().Cypher
+                    .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
+                    .Where("s.id = {id} and r.value =4")
+                    .WithParam("id", id)
+                    .Return(emp => emp.As<Employee>())
+                    .Results.ToList<Employee>();
+
+            SkillEmployeesResult skempRes = new SkillEmployeesResult();
+            skempRes.id = skill.id;
+            skempRes.name = skill.name;
+            skempRes.JrEmployees = jrsemp;
+            skempRes.IntEmployees = intemp;
+            skempRes.SrSEmployees = sremp;
+            skempRes.LdSEmployees = ldsemp;
+
+            return skempRes;           
+        }
     }
    
     
