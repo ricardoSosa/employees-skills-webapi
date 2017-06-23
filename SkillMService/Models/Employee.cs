@@ -7,6 +7,11 @@ namespace SkillMService.Models
 {
     public class Employee
     {
+        public Employee()
+        {
+
+        }
+
         public Employee(string name)
         {
             this.name = name;

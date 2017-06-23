@@ -9,6 +9,10 @@ namespace SkillMService.Models
     {
         //public string id { get; set; }
 
+        public Family()
+        {
+        }
+
         public Family(string name)
         {
             this.name = name;

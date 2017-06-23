@@ -7,10 +7,13 @@ using System.Web.Http;
 using SkillMService.Results;
 using SkillMService.Models;
 using SkillMService.App_Start;
+using System.Web.Http.Cors;
+using Neo4jClient;
 
 namespace SkillMService.Controllers
 {
     [RoutePrefix("api/Skill")]
+    [EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
     public class SkillController : ApiController
     {
         [Route("getList")]
@@ -35,7 +38,7 @@ namespace SkillMService.Controllers
                     .Results.Single();            
 
             List<Family> skGroup = DBConnection.GraphClient().Cypher
-                    .Match("(s:Skill)-[r:isFor]->(f:Family)")
+                    .Match("(s:Skill)-[r:IS_RELATED_TO]->(f:SkillGroup)")
                     .Where("s.id = {id}")
                     .WithParam("id", id)
                     .Return(f => f.As<Family>())
@@ -64,21 +67,21 @@ namespace SkillMService.Controllers
 
             List<Employee> jrsemp = DBConnection.GraphClient().Cypher
                     .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
-                    .Where("s.id = {id} and r.value =1")
+                    .Where("s.id = {id} and r.value = '1'")
                     .WithParam("id", id)
                     .Return(emp => emp.As<Employee>())
                     .Results.ToList<Employee>();
 
             List<Employee> intemp = DBConnection.GraphClient().Cypher
                     .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
-                    .Where("s.id = {id} and r.value = 2")
+                    .Where("s.id = {id} and r.value = '2'")
                     .WithParam("id", id)
                     .Return(emp => emp.As<Employee>())
                     .Results.ToList<Employee>();
 
             List<Employee> sremp = DBConnection.GraphClient().Cypher
                     .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
-                    .Where("s.id = {id} and r.value =3")
+                    .Where("s.id = {id} and r.value = '3'")
                     .WithParam("id", id)
                     .Return(emp => emp.As<Employee>())
                     .Results.ToList<Employee>();
@@ -86,7 +89,7 @@ namespace SkillMService.Controllers
 
             List<Employee> ldsemp = DBConnection.GraphClient().Cypher
                     .Match("(emp:Emp)-[r:Knows]->(s:Skill)")
-                    .Where("s.id = {id} and r.value =4")
+                    .Where("s.id = {id} and r.value = '4'")
                     .WithParam("id", id)
                     .Return(emp => emp.As<Employee>())
                     .Results.ToList<Employee>();
@@ -96,8 +99,8 @@ namespace SkillMService.Controllers
             skempRes.name = skill.name;
             skempRes.JrEmployees = jrsemp;
             skempRes.IntEmployees = intemp;
-            skempRes.SrSEmployees = sremp;
-            skempRes.LdSEmployees = ldsemp;
+            skempRes.SrEmployees = sremp;
+            skempRes.LdEmployees = ldsemp;
 
             return skempRes;           
         }
@@ -254,7 +257,7 @@ namespace SkillMService.Controllers
             bool isRelated = false;
 
             var result =
-                graphClient.Cypher
+                DBConnection.GraphClient().Cypher
                 .Match("(sk:Skill)-[rel:IS_RELATED_TO]->(skgp:SkillGroup)")
                 .Where("sk.name = {skillName}")
                 .WithParam("skillName", skillName)

@@ -11,7 +11,7 @@ namespace SkillMService.App_Start
         static public GraphClient GraphClient()
         {
             GraphClient graphClient;
-            graphClient = new GraphClient(new Uri("http://localhost:7474/db/data"), "", "");
+            graphClient = new GraphClient(new Uri("http://localhost:7474/db/data"), "neo4j", "skills");
             graphClient.Connect();
             return graphClient;
         }

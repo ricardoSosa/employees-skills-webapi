@@ -14,7 +14,7 @@ namespace SkillMService.Results
 
         public List<Employee> JrEmployees { get; set; }
         public List<Employee> IntEmployees { get; set; }
-        public List<Employee> SrSEmployees { get; set; }
-        public List<Employee> LdSEmployees { get; set; }
+        public List<Employee> SrEmployees { get; set; }
+        public List<Employee> LdEmployees { get; set; }
     }
 }

@@ -15,6 +15,7 @@ namespace SkillMService
         {
             // Configuración y servicios de Web API
             // Configure Web API para usar solo la autenticación de token de portador.
+            config.EnableCors();
             config.SuppressDefaultHostAuthentication();
             config.Filters.Add(new HostAuthenticationFilter(OAuthDefaults.AuthenticationType));
 
